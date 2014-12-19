@@ -1,0 +1,134 @@
+primitive res_drbd_cfg_nginx ocf:linbit:drbd \
+	params drbd_resource="drbd_cfg_nginx" \
+	operations $id="res_drbd_cfg_nginx-operations" \
+	op start interval="0" timeout="240" \
+	op promote interval="0" timeout="90" \
+	op demote interval="0" timeout="90" \
+	op stop interval="0" timeout="100" \
+	op monitor interval="10" timeout="20" start-delay="0" \
+	op notify interval="0" timeout="90"
+primitive res_drbd_cfg_openvpn ocf:linbit:drbd \
+	params drbd_resource="drbd_cfg_openvpn" \
+	operations $id="res_drbd_cfg_openvpn-operations" \
+	op start interval="0" timeout="240" \
+	op promote interval="0" timeout="90" \
+	op demote interval="0" timeout="90" \
+	op stop interval="0" timeout="100" \
+	op monitor interval="10" timeout="20" start-delay="0" \
+	op notify interval="0" timeout="90"
+primitive res_drbd_cfg_shorewall ocf:linbit:drbd \
+	params drbd_resource="drbd_cfg_shorewall" \
+	operations $id="res_drbd_cfg_shorewall-operations" \
+	op start interval="0" timeout="240" \
+	op promote interval="0" timeout="90" \
+	op demote interval="0" timeout="90" \
+	op stop interval="0" timeout="100" \
+	op monitor interval="10" timeout="20" start-delay="0" \
+	op notify interval="0" timeout="90"
+primitive res_fs_cfg_nginx ocf:heartbeat:Filesystem \
+	params device="/dev/drbd/by-res/drbd_cfg_nginx/0" directory="/etc/nginx" fstype="ext4" \
+	operations $id="res_fs_cfg_nginx-operations" \
+	op start interval="0" timeout="60" \
+	op stop interval="0" timeout="60" \
+	op monitor interval="20" timeout="40" start-delay="0" \
+	op notify interval="0" timeout="60"
+primitive res_fs_cfg_openvpn ocf:heartbeat:Filesystem \
+	params device="/dev/drbd/by-res/drbd_cfg_openvpn/0" directory="/etc/openvpn" fstype="ext4" \
+	operations $id="res_fs_cfg_openvpn-operations" \
+	op start interval="0" timeout="60" \
+	op stop interval="0" timeout="60" \
+	op monitor interval="20" timeout="40" start-delay="0" \
+	op notify interval="0" timeout="60"
+primitive res_fs_cfg_shorewall ocf:heartbeat:Filesystem \
+	params device="/dev/drbd/by-res/drbd_cfg_shorewall/0" directory="/etc/shorewall" fstype="ext4" \
+	operations $id="res_fs_cfg_shorewall-operations" \
+	op start interval="0" timeout="60" \
+	op stop interval="0" timeout="60" \
+	op monitor interval="20" timeout="40" start-delay="0" \
+	op notify interval="0" timeout="60"
+primitive res_ip_external_gateway ocf:heartbeat:IPaddr2 \
+	params ip="94.199.178.177" cidr_netmask="24" nic="eth0" broadcast="94.199.178.255" flush_routes="true" \
+	op monitor interval="30" timeout="25" start-delay="0"
+primitive res_ip_external_proxy ocf:heartbeat:IPaddr2 \
+	params ip="94.199.178.189" cidr_netmask="24" nic="eth0" broadcast="94.199.178.255" flush_routes="true" \
+	op monitor interval="30" timeout="25" start-delay="0"
+primitive res_ip_internal_vpngateway ocf:heartbeat:IPaddr2 \
+	params ip="10.101.0.10" cidr_netmask="20" nic="eth1" broadcast="10.101.0.15" flush_routes="true" \
+	op monitor interval="30" timeout="25" start-delay="0"
+primitive res_lsb_srv_gateway lsb:shorewall \
+	op monitor interval="20s" \
+	meta target-role="Started" migration-threshold="3" failure-timeout="60s"
+primitive res_lsb_srv_httproxy lsb:nginx \
+	op monitor interval="20s" \
+	meta target-role="Started" migration-threshold="3" failure-timeout="60s"
+primitive res_lsb_srv_openvpn lsb:openvpn \
+	op monitor interval="20s" \
+	meta target-role="Started" migration-threshold="3" failure-timeout="60s"
+primitive res_lsb_srv_proxywall lsb:shorewall \
+	op monitor interval="20s" \
+	meta target-role="Started" migration-threshold="3" failure-timeout="60s"
+primitive res_route_external_gateway ocf:heartbeat:Route \
+	params destination="0.0.0.0/0" device="eth0" gateway="94.199.178.1" \
+	op monitor timeout="20" interval="10" depth="0"
+primitive res_route_external_proxy ocf:heartbeat:Route \
+	params destination="0.0.0.0/0" device="eth0" gateway="94.199.178.1" \
+	op monitor timeout="20" interval="10" depth="0"
+primitive res_route_internal_vpn ocf:heartbeat:Route \
+	params destination="10.201.0.0/20" device="eth1" gateway="10.101.0.10" \
+	op monitor timeout="20" interval="10" depth="0"ß
+ms ms_drbd_cfg_nginx res_drbd_cfg_nginx \
+	meta clone-max="2" notify="true" interleave="true"
+ms ms_drbd_cfg_openvpn res_drbd_cfg_openvpn \
+	meta clone-max="2" notify="true" interleave="true"
+ms ms_drbd_cfg_shorewall res_drbd_cfg_shorewall \
+	meta clone-max="2" notify="true" interleave="true"
+location loc_res_ip_external_gateway_ssnpve001 res_ip_external_gateway 20: ssnpve001
+location loc_res_ip_external_gateway_ssnpve002 res_ip_external_gateway 0: ssnpve002
+location loc_res_ip_external_proxy_ssnpve001 res_ip_external_proxy 0: ssnpve001
+location loc_res_ip_external_proxy_ssnpve002 res_ip_external_proxy 20: ssnpve002
+location loc_res_lsb_srv_gateway_ssnpve001 res_lsb_srv_gateway 20: ssnpve001
+location loc_res_lsb_srv_gateway_ssnpve002 res_lsb_srv_gateway 0: ssnpve002
+location loc_res_lsb_srv_httproxy_ssnpve001 res_lsb_srv_httproxy 0: ssnpve001
+location loc_res_lsb_srv_httproxy_ssnpve002 res_lsb_srv_httproxy 20: ssnpve002
+location loc_res_lsb_srv_openvpn_ssnpve001 res_lsb_srv_openvpn 20: ssnpve001
+location loc_res_lsb_srv_openvpn_ssnpve002 res_lsb_srv_openvpn 0: ssnpve002
+location loc_res_lsb_srv_proxywall_ssnpve001 res_lsb_srv_proxywall -inf: ssnpve001
+location loc_res_lsb_srv_proxywall_ssnpve002 res_lsb_srv_proxywall 20: ssnpve002
+colocation col_res_ip_external_gateway_ip_internal_vpngateway inf: res_ip_external_gateway res_ip_internal_vpngateway
+colocation col_res_ip_external_gateway_dependencies inf: res_route_external_gateway res_ip_external_gateway
+colocation col_res_ip_external_proxy_dependencies inf: res_route_external_proxy res_ip_external_proxy
+colocation col_res_lsb_srv_gateway_fs_cfg_shorewall inf: res_fs_cfg_shorewall res_lsb_srv_gateway
+colocation col_res_lsb_srv_gateway_lsb_srv_proxywall -inf: res_lsb_srv_proxywall:Started res_lsb_srv_gateway:Started
+colocation col_res_lsb_srv_httproxy_fs_cfg_nginx inf: res_fs_cfg_nginx res_lsb_srv_httproxy
+colocation col_res_lsb_srv_openvpn_fs_cfg_openvpn inf: res_fs_cfg_openvpn res_lsb_srv_openvpn
+colocation col_res_ms_drbd_cfg_nginx_fs_cfg_nginx inf: ms_drbd_cfg_nginx:Master res_fs_cfg_nginx
+colocation col_res_ms_drbd_cfg_openvpn_fs_cfg_openvpn inf: ms_drbd_cfg_openvpn:Master res_fs_cfg_openvpn
+colocation col_res_ms_drbd_cfg_shorewall_fs_cfg_shorewall inf: ms_drbd_cfg_shorewall:Master res_fs_cfg_shorewall
+colocation col_res_route_external_gateway_route_external_proxy -inf: res_route_external_proxy:Started res_route_external_gateway:Started
+colocation col_res_route_internal_vpn_srv_openvpn -inf: res_route_internal_vpn:Started res_lsb_srv_openvpn:Started
+order ord_res_lsb_srv_gateway_fs_cfg_shorewall inf: res_fs_cfg_shorewall res_lsb_srv_gateway:start
+order ord_res_lsb_srv_gateway_lsb_srv_proxywall inf: res_lsb_srv_gateway res_lsb_srv_proxywall
+order ord_res_lsb_srv_gateway_route_external_gateway inf: [ res_route_external_gateway res_route_external_proxy ] res_lsb_srv_gateway:start
+order ord_res_lsb_srv_httproxy_fs_cfg_nginx inf: res_fs_cfg_nginx res_lsb_srv_httproxy:start
+order ord_res_lsb_srv_httproxy_lsb_srv_httproxy inf: [ res_route_external_gateway res_route_external_proxy ] res_lsb_srv_httproxy:start
+order ord_res_lsb_srv_openvpn_fs_cfg_openvpn inf: res_fs_cfg_openvpn res_lsb_srv_openvpn:start
+order ord_res_lsb_srv_openvpn_lsb_srv_gateway inf: res_lsb_srv_gateway res_lsb_srv_openvpn:start
+order ord_res_lsb_srv_openvpn_route_internal_vpn inf: res_lsb_srv_openvpn res_route_internal_vpn
+order ord_res_ms_drbd_cfg_nginx_fs_cfg_nginx inf: ms_drbd_cfg_nginx:promote res_fs_cfg_nginx:start
+order ord_res_ms_drbd_cfg_openvpn_fs_cfg_openvpn inf: ms_drbd_cfg_openvpn:promote res_fs_cfg_openvpn:start
+order ord_res_ms_drbd_cfg_shorewall_fs_cfg_shorewall inf: ms_drbd_cfg_shorewall:promote res_fs_cfg_shorewall:start
+order ord_res_route_external_gateway_ip_internal_vpngateway inf: res_route_external_gateway res_ip_internal_vpngateway:start
+order ord_res_route_external_gateway_ip_external_gateway inf: res_ip_external_gateway res_route_external_gateway
+order ord_res_route_external_gateway_route_external_proxy inf: res_route_external_gateway res_route_external_proxy
+order ord_res_route_external_proxy_ip_external_proxy inf: res_ip_external_proxy res_route_external_proxy
+property $id="cib-bootstrap-options" \
+	no-quorum-policy="ignore" \
+	pe-warn-series-max="1000" \
+	pe-input-series-max="1000" \
+	pe-error-series-max="1000" \
+	cluster-recheck-interval="5min" \
+	stonith-enabled="false" \
+	last-lrm-refresh="1410450715" \
+	dc-version="1.1.10-42f2063" \
+	cluster-infrastructure="corosync"
+#vim:set syntax=pcmk
