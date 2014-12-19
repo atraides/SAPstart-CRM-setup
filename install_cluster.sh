@@ -10,11 +10,11 @@ if [ -e /etc/corosync/corosync.conf ]; then
     mv /etc/corosync/corosync.conf /etc/corosync/corosync.conf.orig; 
 fi
 
-curl -L http://orsay.sapstar.eu/cluster_cfg.tbz2 | tar jxv -C /
+tar jxvf cluster_cfg.tbz2 -C /
 
 service drbd start ; service corosync start && service pacemaker start
 
-curl -L http://orsay.sapstar.eu/drbd_cfg.tbz2 | tar jxv -C /
+tar jxvf drbd_cfg.tbz2 -C /
 
 for i in nginx openvpn shorewall; do lvcreate -L 256M -n lv_$i rootvg; done
 
